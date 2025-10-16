@@ -4,11 +4,9 @@ import { useRoute, useRouter } from "vue-router";
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Save } from 'lucide-vue-next'
 
-// ==================== ROUTER ====================
 const route = useRoute();
 const router = useRouter();
 
-// ==================== STATE ====================
 const taskId = computed(() => route.params.id);
 const form = ref({
   title: '',
@@ -28,12 +26,10 @@ const todosList = ref([
   { id: 3, title: "Tache 3", description: "desctoin dutask desctoin dutask", completed: false, date: new Date() }
 ]);
 
-// ==================== LIFECYCLE ====================
 onMounted(() => {
   loadTask();
 });
 
-// ==================== METHODS ====================
 // Charger la tâche
 const loadTask = () => {
   const todo = todosList.value.find(t => t.id === parseInt(taskId.value));
@@ -117,7 +113,7 @@ const showNotification = (message) => {
 
 <template>
   <div class="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50">
-    <!-- ==================== HEADER ==================== -->
+    <!-- HEADER  -->
     <div class="mb-8 flex items-center gap-4">
       <button
         @click="goBack"
@@ -131,7 +127,7 @@ const showNotification = (message) => {
       </div>
     </div>
 
-    <!-- ==================== FORM ==================== -->
+    <!--  FORM  -->
     <div class="bg-white rounded-xl shadow-sm border border-green-200 p-8 max-w-2xl">
       <!-- Error Message -->
       <div v-if="errors.submit" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
@@ -218,7 +214,7 @@ const showNotification = (message) => {
       </form>
     </div>
 
-    <!-- ==================== NOTIFICATIONS ==================== -->
+   
     <transition-group name="notification" tag="div" class="fixed bottom-6 right-6 space-y-3 pointer-events-none">
       <div
         v-for="notif in notifications"

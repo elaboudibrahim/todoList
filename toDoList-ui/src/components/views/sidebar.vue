@@ -11,10 +11,10 @@ import {
   HelpCircle
 } from 'lucide-vue-next'
 
-// ==================== ROUTER ====================
+//  ROUTER 
 const route = useRoute()
 
-// ==================== COMPUTED ====================
+//COMPUTED 
 const navItems = computed(() => [
   { 
     path: '/home', 
@@ -22,7 +22,7 @@ const navItems = computed(() => [
     icon: Home 
   },
   { 
-    path: '/home', 
+    path: '/tasks', 
     label: 'Tâches', 
     icon: ListTodo 
   },
@@ -43,8 +43,9 @@ const logout = () => {
 </script>
 
 <template>
-  <aside class="h-screen bg-white border-r border-green-200 flex flex-col shadow-lg overflow-y-auto">
-    <!-- ==================== LOGO/HEADER ==================== -->
+<aside class="w-56 md:w-64 lg:w-72 h-screen bg-white border-r border-green-200 flex flex-col shadow-lg overflow-y-auto fixed">
+
+    <!--  LOGO/HEADER  -->
     <div class="p-6 border-b border-green-100 sticky top-0 bg-white">
       <div class="flex items-center gap-3 mb-2">
         <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center shadow-md">
@@ -57,7 +58,7 @@ const logout = () => {
       </div>
     </div>
 
-    <!-- ==================== NAVIGATION ==================== -->
+    <!-- NAVIGATION  -->
     <nav class="flex-1 p-4 space-y-2">
       <router-link
         v-for="item in navItems"
@@ -75,16 +76,15 @@ const logout = () => {
       </router-link>
     </nav>
 
-    <!-- ==================== STATS SECTION ==================== -->
+    <!--  STATS SECTION  -->
     <div class="p-4 space-y-3 border-t border-green-100">
       <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
         <p class="text-xs text-gray-600 font-medium mb-1">Tâches restantes</p>
         <p class="text-2xl font-bold text-green-600">12</p>
-        <p class="text-xs text-gray-500 mt-2">3 tâches cette semaine</p>
       </div>
     </div>
 
-    <!-- ==================== QUICK ACTIONS ==================== -->
+    <!--  QUICK ACTIONS 
     <div class="p-4 space-y-2 border-t border-green-100">
       <button class="w-full flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-lg transition text-sm">
         <Bell class="w-4 h-4" />
@@ -98,9 +98,9 @@ const logout = () => {
         <HelpCircle class="w-4 h-4" />
         <span>Aide</span>
       </button>
-    </div>
+    </div> -->
 
-    <!-- ==================== USER PROFILE ==================== -->
+    <!--  USER PROFILE  -->
     <div class="p-4 border-t border-green-100 space-y-4 bg-gradient-to-t from-green-50 to-white">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-sm">

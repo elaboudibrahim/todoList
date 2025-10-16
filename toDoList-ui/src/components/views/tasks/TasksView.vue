@@ -2,7 +2,7 @@
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-vue-next'
+import { Plus, Trash2, Edit2 } from 'lucide-vue-next'
 import Sidebar from "../sidebar.vue";
 import NoTask from "@/components/ui/noTask.vue";
 
@@ -70,7 +70,9 @@ const showNotification = (message) => {
         <h1 class="text-4xl font-bold text-gray-900 mb-2">Ma To-Do List</h1>
         <p class="text-gray-600">Organisez vos tâches et restez productif</p>
       </div>  
-
+    
+    <!-- ajouter un todo  -->
+    <!--Reste à faire : ajouter un accordiantion-->
       <div class="bg-white rounded-xl shadow-sm border border-green-200 p-6 mb-8">
       <div class="space-y-4">
         <input
@@ -97,15 +99,15 @@ const showNotification = (message) => {
           </Button>
         </div>
       </div>
+      <!--Affichage du task-->
     </div>
-    
      <NoTask v-if="todos.length === 0" />
       <div v-else  class="space-y-4">
         <div class="text-gray-600 dark:text-gray-300 text-sm text-center mb-2">
           Vous avez {{ remaining }} tâche{{ remaining > 1 ? 's' : '' }} à faire.
         </div>
         
-      <ul class="space-y-2">
+      <ul class="space-y-2 bg-white rounded-lg border border-green-100 hover:shadow-md hover:border-green-300 transition-all p-4">
         <li v-for="todo in todos" :key="todo.id"
           class="flex items-center justify-between p-2 border-b border-gray-200 dark:border-gray-700">
           <label class="flex items-center gap-2 cursor-pointer">
@@ -120,17 +122,25 @@ const showNotification = (message) => {
             </span>
           </label>
           <div>{{ todo.description }}</div>
-          <div>
-            <Button 
-              variant="secondary" 
-              size="sm"
-              @click="editTodo(todo.id)"
-              class="px-2"
-            >
-              ✏️
-            </Button>
-            <Button variant="destructive" size="sm" @click="deleteTodo(todo.id)">🗑️</Button>
-          </div>
+          
+            <div class="flex gap-2 flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                @click="editTodo(todo.id)"
+                class="text-blue-500 hover:bg-blue-50 hover:text-blue-700"
+              >
+                <Edit2 class="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                @click="deleteTodo(todo.id)"
+                class="text-red-500 hover:bg-red-50 hover:text-red-700"
+              >
+                <Trash2 class="w-4 h-4" />
+              </Button>
+            </div>
         </li>
       </ul>
       </div>

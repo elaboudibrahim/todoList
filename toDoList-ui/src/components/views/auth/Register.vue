@@ -20,7 +20,9 @@ import { Label } from '@/components/ui/label';
 </script>
 
 <template>
-  <Card class="mx-auto max-w-sm">
+   <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+    <div class="w-3/5 max-w-2xl mx-auto">
+  <Card >
     <CardHeader>
       <CardTitle class="text-xl"> Sign Up </CardTitle>
       <CardDescription>
@@ -52,8 +54,9 @@ import { Label } from '@/components/ui/label';
       </div>
       <div class="mt-4 text-center text-sm">
         Already have an account?
-        <a href="#" class="underline"> Sign in </a>
+        <router-link to="/login" class="underline"> Login</router-link>
       </div>
     </CardContent>
   </Card>
+  </div></div>
 </template>
