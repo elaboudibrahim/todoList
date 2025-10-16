@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import LoginForm from '@/components/views/auth/LoginForm.vue';
+import Login from '@/components/views/auth/Login.vue';
 import Register from '@/components/views/auth/Register.vue';
 
 </script>
@@ -10,7 +10,7 @@ import Register from '@/components/views/auth/Register.vue';
         Connexion / Inscription
       </h1>
 
-      <LoginForm />
+      <Login />
       <Register />
 
     </div>
