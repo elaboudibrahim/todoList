@@ -1,8 +1,13 @@
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
+import { useRouter } from "vue-router";
 import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-vue-next'
 import Sidebar from "../sidebar.vue";
-import { description } from "../auth/Register.vue";
+import NoTask from "@/components/ui/noTask.vue";
+
+// ==================== ROUTER ====================
+const router = useRouter();
 
 const todos = ref([
   {id:1,title :"Tache 2",description:"desctoin dutask desctoin dutask desctoin dutask desctoin dutask ", completed : false , date:null},
@@ -11,16 +16,12 @@ const todos = ref([
 ]);
 
 const newTodo = ref('');
+const newDescription = ref('');
+const notifications = ref([]);
 
-
-const deleteTodo = (id) => {
-  const todo = todos.value.find(t => t.id === id);
-  todos.value = todos.value.filter((t) => t.id !== id);
-  showNotification(` "${todo.title}" supprimée`);
-};
-
-// Compter les tâches restantes
+// Computed - Compter les tâches restantes
 const remaining = computed(() => todos.value.filter(t => !t.completed).length);
+
 // Ajouter une tâche
 const addTodo = () => {
   if (!newTodo.value.trim()) return; 
@@ -28,21 +29,30 @@ const addTodo = () => {
   const newTask = {
     id: Date.now(),
     title: newTodo.value.trim(),
-    description: "",
+    description: newDescription.value.trim(),
     completed: false,
     date: Date.now(),
   };
 
   todos.value.push(newTask);
-  showNotification(` Tâche "${newTask.title}" créée avec succès!`);
+  showNotification(`✨ Tâche "${newTask.title}" créée avec succès!`);
   newTodo.value = "";
+  newDescription.value = "";
 };
 
+// Supprimer une tâche
+const deleteTodo = (id) => {
+  const todo = todos.value.find(t => t.id === id);
+  todos.value = todos.value.filter((t) => t.id !== id);
+  showNotification(`🗑️ "${todo.title}" supprimée`);
+};
 
-
+// Rediriger vers la page d'édition avec l'ID
+const editTodo = (id) => {
+  router.push(`/task/edit/${id}`);
+};
 
 // Afficher notification
-const notifications = ref([]);
 const showNotification = (message) => {
   const id = Date.now();
   notifications.value.push({ id, message });
@@ -51,34 +61,52 @@ const showNotification = (message) => {
   }, 3000);
 };
 </script>
+
 <template>
    
-    <div class="container mx-auto py-8 text-center">
-        <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 text-center">
-         Ma To-Do List
-        </h1>
+    <div class="container mx-auto py-8 text-center min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50">
+     <!-- la partie header de lapp-->
+      <div class="mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">Ma To-Do List</h1>
+        <p class="text-gray-600">Organisez vos tâches et restez productif</p>
+      </div>  
 
-      <form action="Post" @Submit.prevent="saveTodo"  class="flex gap-2">
-         <input
+      <div class="bg-white rounded-xl shadow-sm border border-green-200 p-6 mb-8">
+      <div class="space-y-4">
+        <input
           v-model="newTodo"
           type="text"
-          placeholder="Nouvelle tâche..."
-          class="flex-1 border border-gray-300 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-gray-100"
-          />
-          <Button  variant="default" :disabled="newTodo.length === 0"
-                   @click="addTodo">Ajouter</Button> 
-
-      </form>
-      <div v-if="todos.length === 0" class="text-center text-gray-500">
-      Vous n'avez aucune tâche à faire !
+          placeholder="Titre de la tâche..."
+          class="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-50 transition"
+          @keypress.enter="addTodo"
+        />
+        <textarea
+          v-model="newDescription"
+          placeholder="Description (optionnelle)..."
+          class="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-50 resize-none transition"
+          rows="2"/>
+        <div class="flex gap-3">
+          <Button 
+            variant="default"
+            :disabled="newTodo.length === 0"
+            @click="addTodo"
+            class="w-full bg-green-500 hover:bg-green-600 text-white"
+          >
+            <Plus class="w-4 h-4 mr-2" />
+            Ajouter une tâche
+          </Button>
+        </div>
       </div>
-      <div v-else>
+    </div>
+    
+     <NoTask v-if="todos.length === 0" />
+      <div v-else  class="space-y-4">
         <div class="text-gray-600 dark:text-gray-300 text-sm text-center mb-2">
           Vous avez {{ remaining }} tâche{{ remaining > 1 ? 's' : '' }} à faire.
         </div>
         
       <ul class="space-y-2">
-        <li v-for="todo in todos":key="todo.date"
+        <li v-for="todo in todos" :key="todo.id"
           class="flex items-center justify-between p-2 border-b border-gray-200 dark:border-gray-700">
           <label class="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" v-model="todo.completed" class="accent-blue-600" />
@@ -93,15 +121,21 @@ const showNotification = (message) => {
           </label>
           <div>{{ todo.description }}</div>
           <div>
-            <RouterLink to="/task/edit" class="px-2">
-            <Button variant="secondary" size="sm">✏️</Button>
-            </RouterLink>  
+            <Button 
+              variant="secondary" 
+              size="sm"
+              @click="editTodo(todo.id)"
+              class="px-2"
+            >
+              ✏️
+            </Button>
             <Button variant="destructive" size="sm" @click="deleteTodo(todo.id)">🗑️</Button>
           </div>
         </li>
       </ul>
+      </div>
 
-    <transition-group name="notification" tag="div" class="fixed bottom-6 right-6 space-y-3 pointer-events-none">
+      <transition-group name="notification" tag="div" class="fixed bottom-6 right-6 space-y-3 pointer-events-none">
       <div
         v-for="notif in notifications"
         :key="notif.id"
@@ -110,16 +144,15 @@ const showNotification = (message) => {
         {{ notif.message }}
       </div>
     </transition-group>
-      </div>
   </div>
 
 </template>
+
 <style scoped>
 .completed {
   opacity : .5;
   text-decoration : line-through;
 }
-
 
 .list-enter-active,
 .list-leave-active {
