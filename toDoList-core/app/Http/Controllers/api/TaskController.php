@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Http\Controllers\api;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Task;
+
+class TaskController extends Controller
+{
+    public function index()
+    {   
+       // $task=Task::where("user_id",Auth::id())->get();
+        return Task::all();
+    }
+    public function store(Request $request)
+    {
+        //creation du validator: 
+        /*$request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'completed' => 'sometimes|boolean',
+        ]);
+        */
+
+        //creation
+        $task=Task::create([
+            "user_id"=>1234,
+            "title"=>$request->title,
+            "description"=>$request->description,
+            "completed"=>$request->completed?? false
+        ]);
+    }
+    public function show($id)
+    {
+      //  $task=Task::where("user_id,",Auth:id())->findOrFail($id);
+        $task=Task::findOrFail($id);
+        return response()->json($task);
+    }
+    public function update(Request $request, $id)
+    {
+        //$task = Task::where('user_id', Auth::id())->findOrFail($id);
+        $task= Task::findOrFail($id);
+        //validate
+        /*
+         $request->validate([
+            'title' => 'sometimes|required|string|max:255',
+            'description' => 'nullable|string',
+            'completed' => 'sometimes|boolean',
+        ]);
+        */   
+        $task->update($request->only(['title',"description","completed"]));
+        return response()->json($task);
+    }
+    public function destroy($id)
+    {
+        //$task = Task::where('user_id', Auth::id())->findOrFail($id);
+        $task=Task::findOrFail($id);
+        $task->delete();
+        return response()->json(['message' => 'Task deleted successfully']);
+    }
+}
