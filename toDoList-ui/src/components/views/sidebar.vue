@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { 
   Home, 
   ListTodo, 
@@ -10,11 +10,14 @@ import {
   Bell,
   HelpCircle
 } from 'lucide-vue-next'
+import { authStore } from '@/stores/authStore'
+import { taskStore } from '@/stores/taskStore'
 
-//  ROUTER 
 const route = useRoute()
-
-//COMPUTED 
+const router = useRouter();
+const auth= authStore();
+auth.loadUser()
+const tasks= taskStore();
 const navItems = computed(() => [
   { 
     path: '/home', 
@@ -35,10 +38,9 @@ const navItems = computed(() => [
 
 const isActive = (path) => route.path.includes(path)
 
-// ==================== HANDLERS ====================
 const logout = () => {
-  // TODO: Implémentation logout (clear JWT token, etc.)
-  console.log('Logout')
+  auth.logout();
+  router.push('/login')
 }
 </script>
 
@@ -80,7 +82,7 @@ const logout = () => {
     <div class="p-4 space-y-3 border-t border-green-100">
       <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
         <p class="text-xs text-gray-600 font-medium mb-1">Tâches restantes</p>
-        <p class="text-2xl font-bold text-green-600">12</p>
+        <p class="text-2xl font-bold text-green-600">{{ tasks.countRemains }}</p>
       </div>
     </div>
 
@@ -104,16 +106,16 @@ const logout = () => {
     <div class="p-4 border-t border-green-100 space-y-4 bg-gradient-to-t from-green-50 to-white">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-sm">
-          JD
+          Pr
         </div>
         <div class="flex-1 min-w-0">
-          <p class="text-sm font-medium text-gray-900 truncate">John Doe</p>
-          <p class="text-xs text-gray-500 truncate">john@example.com</p>
+          <p class="text-sm font-medium text-gray-900 truncate">{{ auth.user.full_name }}</p>
+          <p class="text-xs text-gray-500 truncate">{{ auth.user.email }}</p>
         </div>
       </div>
 
       <button
-        @click="logout"
+        @click="logout()"
         class="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-gray-700 hover:bg-red-50 hover:text-red-700 rounded-lg transition font-medium text-sm border border-gray-200 hover:border-red-200"
       >
         <LogOut class="w-4 h-4" />

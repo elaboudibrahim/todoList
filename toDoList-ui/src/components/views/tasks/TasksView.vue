@@ -3,10 +3,11 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { Button } from '@/components/ui/button'
 import { Plus, Trash2, Edit2 } from 'lucide-vue-next'
-import Sidebar from "../sidebar.vue";
 import NoTask from "@/components/ui/noTask.vue";
 import axios from "axios";
 import AlertDelet from "@/components/ui/alertDelet.vue";
+import { authStore } from "@/stores/authStore";
+import { taskStore } from "@/stores/taskStore";
 
 const router = useRouter();
 const todos = ref([]);
@@ -15,7 +16,10 @@ const newDescription = ref('');
 const notifications = ref([]);
 const openDeleteDialog = ref(false);
 const isDeleting = ref(false);
+const auth=authStore();
+auth.loadUser();
 
+const tasks= taskStore();
 onMounted(()=>{
   fetchTask();
 });
@@ -24,8 +28,7 @@ const fetchTask = async()=>{
   try{
     const response = await axios.get("http://127.0.0.1:8000/api/tasks");
     todos.value = response.data;
-    console.log(todos);
-
+    tasks.setter(todos.value)
   }catch(error){
     console.error("erreur api: ",error);
   }
@@ -41,12 +44,13 @@ const remaining = computed(() => todos.value.filter(t => !t.completed).length);
 const addTodo = async () => {
   if (!newTodo.value.trim()) return; 
   const newTask = {
-    user_id:1234,
+    user_id:auth.user.id,
     title: newTodo.value.trim(),
     description:newDescription.value.trim(),
     completed: false,
   };
     try{
+      console.log(newTask)
       await axios.post("http://127.0.0.1:8000/api/tasks/", newTask);
       todos.value.push(newTask)
       showNotification(`✨ Tâche "${newTask.title}" créée avec succès!`);
@@ -74,6 +78,7 @@ const deleteTodo = async (id) => {
   try{
     const response = await axios.delete(`http://127.0.0.1:8000/api/tasks/:${id}`)
     todos.value = todos.value.filter((t) => t.id !== id);
+    tasks.setter(todos.value)
     openDeleteDialog.value=false
     showNotification(`🗑️ "${response.data.message}"`);
   }catch(error){
