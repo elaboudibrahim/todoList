@@ -17,6 +17,37 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import axios from 'axios';
+import  {authStore} from '@/stores/authStore';
+
+const route = useRouter();
+const email = ref('');
+const password = ref('');
+const auth=authStore();
+const login=async()=>{
+
+  try{
+      const response = await axios.post('http://127.0.0.1:8000/api/auth/login', {
+      email: email.value,
+      password: password.value,
+    });
+
+    if (response.status === 200) {
+      auth.setUser(response.data,1111)
+      console.log(response.data)
+      alert('Connexion réussie');
+      route.push('/home'); 
+    }
+
+  }catch(error){
+      console.log(error)
+  //  if (error.response && error.response.status === 401) {
+      alert('Email ou mot de passe incorrect');
+      console.log(error.message) 
+}
+};
 </script>
 
 <template>
@@ -33,7 +64,7 @@ import { Label } from '@/components/ui/label';
       <div class="grid gap-4">
         <div class="grid gap-2">
           <Label for="email">Email</Label>
-          <Input id="email" type="email" placeholder="m@example.com" required />
+          <Input id="email" type="email" v-model="email" placeholder="m@example.com" required />
         </div>
         <div class="grid gap-2">
           <div class="flex items-center">
@@ -42,10 +73,11 @@ import { Label } from '@/components/ui/label';
               Forgot your password?
             </a>
           </div>
-          <Input id="password" type="password" required />
+          <Input id="password" type="password" v-model="password" required />
         </div>
-        <Button type="submit" class="w-full"> Login </Button>
-        <Button variant="outline" class="w-full"> Login with Google </Button>
+        <Button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white" 
+         @click="login"> Login </Button>
+    <!--    <Button variant="outline" class="w-full"> Login with Google </Button>-->
       </div>
       <div class="mt-4 text-center text-sm">
         Don't have an account?
