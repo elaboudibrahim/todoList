@@ -1,55 +1,101 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { Button } from '@/components/ui/button'
 import { Plus, Trash2, Edit2 } from 'lucide-vue-next'
 import Sidebar from "../sidebar.vue";
 import NoTask from "@/components/ui/noTask.vue";
+import axios from "axios";
+import AlertDelet from "@/components/ui/alertDelet.vue";
 
-// ==================== ROUTER ====================
 const router = useRouter();
-
-const todos = ref([
-  {id:1,title :"Tache 2",description:"desctoin dutask desctoin dutask desctoin dutask desctoin dutask ", completed : false , date:null},
-  {id:2,title :"Tache 1",description:"desctoin dutask desctoin dutask desctoin dutask desctoin dutask ", completed : true , date:null},
-  {id:3,title :"Tache 3",description:"desctoin dutask desctoin dutask desctoin dutask desctoin dutask ", completed : false , date:null}
-]);
-
+const todos = ref([]);
 const newTodo = ref('');
 const newDescription = ref('');
 const notifications = ref([]);
+const openDeleteDialog = ref(false);
+const isDeleting = ref(false);
+
+onMounted(()=>{
+  fetchTask();
+});
+
+const fetchTask = async()=>{
+  try{
+    const response = await axios.get("http://127.0.0.1:8000/api/tasks");
+    todos.value = response.data;
+    console.log(todos);
+
+  }catch(error){
+    console.error("erreur api: ",error);
+  }
+}
+
 
 // Computed - Compter les tâches restantes
 const remaining = computed(() => todos.value.filter(t => !t.completed).length);
 
 // Ajouter une tâche
-const addTodo = () => {
+//TODO: ajouer larefresh du liste existant
+//TODO: modifie l id d user
+const addTodo = async () => {
   if (!newTodo.value.trim()) return; 
-
   const newTask = {
-    id: Date.now(),
+    user_id:1234,
     title: newTodo.value.trim(),
-    description: newDescription.value.trim(),
+    description:newDescription.value.trim(),
     completed: false,
-    date: Date.now(),
+  };
+    try{
+      await axios.post("http://127.0.0.1:8000/api/tasks/", newTask);
+      todos.value.push(newTask)
+      showNotification(`✨ Tâche "${newTask.title}" créée avec succès!`);
+      newTodo.value = "";
+      newDescription.value = "";
+    }catch(error){
+      console.error("Erreur lors de la création :", error);
+    }
   };
 
-  todos.value.push(newTask);
-  showNotification(`✨ Tâche "${newTask.title}" créée avec succès!`);
-  newTodo.value = "";
-  newDescription.value = "";
-};
+  //ouvrir la boite de dialog delete
+const confirmDelete = () => {
+  openDeleteDialog.value=true;
+  isDeleting.value = false;
 
+};
+// annuler la suppression
+const cancelDelete = () => {
+  openDeleteDialog.value=false;
+  isDeleting.value = false;
+};
 // Supprimer une tâche
-const deleteTodo = (id) => {
-  const todo = todos.value.find(t => t.id === id);
-  todos.value = todos.value.filter((t) => t.id !== id);
-  showNotification(`🗑️ "${todo.title}" supprimée`);
+const deleteTodo = async (id) => {
+  isDeleting.value = true;
+  try{
+    const response = await axios.delete(`http://127.0.0.1:8000/api/tasks/:${id}`)
+    todos.value = todos.value.filter((t) => t.id !== id);
+    openDeleteDialog.value=false
+    showNotification(`🗑️ "${response.data.message}"`);
+  }catch(error){
+    showNotification('❌ Erreur lors de la suppression');
+    console.error("impossible de supprimer")
+  } finally {
+    isDeleting.value = false;
+    openDeleteDialog.value = false;
+  }
 };
 
 // Rediriger vers la page d'édition avec l'ID
 const editTodo = (id) => {
-  router.push(`/task/edit/${id}`);
+  router.push(`/task/edit/:${id}`);
+};
+
+const updateTodoStatus=async (todo)=>{
+    try {
+    const response = await axios.put(`http://127.0.0.1:8000/api/tasks/:${todo.id}`,todo)
+    }catch(error){
+      console.log(error)
+    }
 };
 
 // Afficher notification
@@ -101,27 +147,48 @@ const showNotification = (message) => {
       </div>
       <!--Affichage du task-->
     </div>
-     <NoTask v-if="todos.length === 0" />
-      <div v-else  class="space-y-4">
-        <div class="text-gray-600 dark:text-gray-300 text-sm text-center mb-2">
-          Vous avez {{ remaining }} tâche{{ remaining > 1 ? 's' : '' }} à faire.
-        </div>
-        
-      <ul class="space-y-2 bg-white rounded-lg border border-green-100 hover:shadow-md hover:border-green-300 transition-all p-4">
-        <li v-for="todo in todos" :key="todo.id"
-          class="flex items-center justify-between p-2 border-b border-gray-200 dark:border-gray-700">
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" v-model="todo.completed" class="accent-blue-600" />
-            <span
-              :class="{
-                'line-through text-gray-400': todo.completed,
-                'text-gray-900 dark:text-gray-100': !todo.completed,
+    <div class="w-full max-w-2xl mx-auto">
+
+    <!-- Message si pas de tâches -->
+    <NoTask v-if="todos.length === 0" />
+
+    <!-- Affichage si tâches existent -->
+    <div v-else  class="space-y-4">
+      <div class="text-gray-600 dark:text-gray-300 text-sm text-center mb-4 font-medium">
+        Vous avez <span class="font-bold text-blue-600">{{ remaining }}</span> 
+        tâche{{ remaining > 1 ? 's' : '' }} à faire.
+    </div>
+
+    <!-- Liste des tâches -->
+    <ul class="space-y-3 bg-white rounded-lg border border-green-100 shadow-sm p-4">
+    <li v-for="todo in todos" :key="todo.id"
+        class="group flex items-start gap-3 p-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+      <label class="flex items-start gap-3 flex-1 cursor-pointer min-w-0">
+        <input type="checkbox"
+              :checked="todo.completed"
+              @change="(e) => {
+                todo.completed = e.target.checked;
+                updateTodoStatus(todo);
               }"
-            >
-              {{ todo.title }}
-            </span>
+              class="accent-blue-600 mt-1 flex-shrink-0 w-5 h-5"/>
+           
+           <div class="flex-1 min-w-0">
+              <div
+                :class="{'line-through text-gray-400': todo.completed, 'text-gray-900 dark:text-gray-100 font-medium': !todo.completed, }"
+                class="text-sm mb-1" >
+                {{ todo.title }}
+              </div>
+              <div v-if="todo.description"
+                :class="{
+                  'line-through text-gray-300': todo.completed,
+                  'text-gray-600 dark:text-gray-400': !todo.completed,
+                }"
+                class="text-xs truncate"
+              >
+                {{ todo.description }}
+              </div>
+            </div>
           </label>
-          <div>{{ todo.description }}</div>
           
             <div class="flex gap-2 flex-shrink-0">
               <Button
@@ -132,10 +199,18 @@ const showNotification = (message) => {
               >
                 <Edit2 class="w-4 h-4" />
               </Button>
+              <AlertDelet 
+              :open="openDeleteDialog"
+              :is-deleting="isDeleting"
+              v-on:cancel="cancelDelete"
+              v-on:confirm="deleteTodo(todo.id)"
+
+              />
+              <!-- @click="deleteTodo(todo.id)"-->
               <Button
                 variant="ghost"
                 size="sm"
-                @click="deleteTodo(todo.id)"
+               @click="confirmDelete"
                 class="text-red-500 hover:bg-red-50 hover:text-red-700"
               >
                 <Trash2 class="w-4 h-4" />
@@ -143,7 +218,7 @@ const showNotification = (message) => {
             </div>
         </li>
       </ul>
-      </div>
+      </div></div>
 
       <transition-group name="notification" tag="div" class="fixed bottom-6 right-6 space-y-3 pointer-events-none">
       <div

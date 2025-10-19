@@ -3,12 +3,13 @@ import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Save } from 'lucide-vue-next'
+import axios from "axios";
 
 const route = useRoute();
 const router = useRouter();
 
-const taskId = computed(() => route.params.id);
 const form = ref({
+  id:'',
   title: '',
   description: '',
   completed: false
@@ -20,28 +21,31 @@ const notifications = ref([]);
 
 // TODO: Remplacer par un store/API pour récupérer les todos
 // Pour maintenant, utiliser les données du parent ou une store Pinia
-const todosList = ref([
-  { id: 1, title: "Tache 2", description: "desctoin dutask desctoin dutask", completed: false, date: new Date() },
-  { id: 2, title: "Tache 1", description: "desctoin dutask desctoin dutask", completed: true, date: new Date() },
-  { id: 3, title: "Tache 3", description: "desctoin dutask desctoin dutask", completed: false, date: new Date() }
-]);
-
+/*
+const todosList = ref([]);
+*/
 onMounted(() => {
-  loadTask();
+  const taskId = computed(() => route.params.id);
+  loadTask(taskId);
 });
 
 // Charger la tâche
-const loadTask = () => {
-  const todo = todosList.value.find(t => t.id === parseInt(taskId.value));
-  
-  if (todo) {
-    form.value = {
-      title: todo.title,
-      description: todo.description,
-      completed: todo.completed
-    };
-  } else {
-    errors.value.submit = 'Tâche non trouvée';
+const loadTask = async (taskId) => {
+  try{
+    const response = await axios.get(`http://127.0.0.1:8000/api/tasks/${taskId.value}`)
+    if (response.data) {
+      form.value = {
+        id:response.data.id,
+        title: response.data.title,
+        description: response.data.description,
+        completed: response.data.completed
+      };
+    } else {
+      errors.value.submit = 'Tâche non trouvée';
+      console.error(errors.value.submit )
+    }
+  }catch(error){
+    console.error(error)
   }
 };
 
@@ -58,7 +62,6 @@ const validate = () => {
     errors.value.title = 'Le titre doit contenir au moins 3 caractères';
     return false;
   }
-  
   return true;
 };
 
@@ -68,20 +71,7 @@ const saveTask = async () => {
 
   isLoading.value = true;
   try {
-    // TODO: Remplacer par appel API Axios
-    // const { data } = await api.put(`/tasks/${taskId.value}`, form.value)
-    
-    // Simulation API - mise à jour de la tâche locale
-    const todo = todosList.value.find(t => t.id === parseInt(taskId.value));
-    if (todo) {
-      todo.title = form.value.title.trim();
-      todo.description = form.value.description.trim();
-      todo.completed = form.value.completed;
-    }
-    
-    // Simulation délai API
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
+    const response = await axios.put(`http://127.0.0.1:8000/api/tasks/:${form.value.id}`,form.value)
     showNotification('✅ Tâche mise à jour avec succès!');
     
     // Rediriger vers la liste après 1 seconde
@@ -100,10 +90,9 @@ const saveTask = async () => {
 const goBack = () => {
   router.push('/home');
 };
-
 // Afficher notification
 const showNotification = (message) => {
-  const id = Date.now();
+  const id = form.value.id;
   notifications.value.push({ id, message });
   setTimeout(() => {
     notifications.value = notifications.value.filter(n => n.id !== id);
@@ -181,7 +170,10 @@ const showNotification = (message) => {
         <!-- Completed Checkbox -->
         <div class="flex items-center gap-3">
           <input
-            v-model="form.completed"
+          :checked="form.completed"
+          @change="(e)=>{
+          form.completed=e.target.checked
+          }"
             type="checkbox"
             id="completed"
             class="w-5 h-5 rounded border-green-300 text-green-600 focus:ring-green-500 cursor-pointer accent-green-500"
