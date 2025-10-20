@@ -15,18 +15,19 @@ use App\Http\Controllers\api\UserController;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+Route::middleware('auth:api')->group(function () {
+    Route::get('/user', fn() => auth()->user());
+    Route::post('/auth/logout', [UserController::class, 'logout']);
+    Route::post('/auth/refresh', [UserController::class, 'refresh']);
 
-Route::prefix("tasks")->group(function(){
-    Route::get("/",[TaskController::class,'index']);
-    Route::get("/:{id}",[TaskController::class,'show']);
-    Route::post('/',[TaskController::class,'store']);
-    Route::put('/:{id}',[TaskController::class,'update']);
-    Route::delete("/:{id}",[TaskController::class,"destroy"]);
+    Route::prefix("tasks")->group(function(){
+        Route::get("/",[TaskController::class,'index']);
+        Route::get("/:{id}",[TaskController::class,'show']);
+        Route::post('/',[TaskController::class,'store']);
+        Route::put('/:{id}',[TaskController::class,'update']);
+        Route::delete("/:{id}",[TaskController::class,"destroy"]);
+    });
 });
-
 Route::prefix("auth")->group(function(){
     Route::post("/register",[UserController::class,"register"]);
     Route::post('/login', [UserController::class, 'login']);

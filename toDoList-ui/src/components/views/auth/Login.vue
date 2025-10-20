@@ -35,8 +35,8 @@ const login=async()=>{
     });
 
     if (response.status === 200) {
-      auth.setUser(response.data,1111)
-      console.log(response.data)
+      auth.setUser(response.data.user,response.data.token)
+      console.log(response)
       alert('Connexion réussie');
       route.push('/home'); 
     }

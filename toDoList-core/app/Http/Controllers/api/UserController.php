@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller
 {
@@ -19,7 +20,10 @@ class UserController extends Controller
             'image' => 'nullable|string',
             'password' => 'required|string|min:6|confirmed', // pour tester avec password_confirmation
         ]); */
-        
+        // if ($validator->fails()) {
+        //     return response()->json($validator->errors(), 422);
+        // }
+
         $user = User::create([
             'full_name' => $request->full_name,
             'email' => $request->email,
@@ -30,24 +34,25 @@ class UserController extends Controller
             'password' =>bcrypt($request->password),
 
         ]);
-        return response()->json($user, 201);
+        
+        $token = JWTAuth::fromUser($user);
+
+        return response()->json(['user'=>$user,'token'=>$token], 201);
     }
     public function update(Request $request, $id)
     {
         //
     }
     public function login(Request $request){
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-        ]);
+         $credentials = $request->only('email', 'password');
 
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$token = auth()->attempt($credentials)) {
             return response()->json(['message' => 'Identifiants invalides'], 401);
         }
-
-        return response()->json($user);
+        
+        return response()->json([
+            'user' => auth()->user(),
+            'token' => $token,
+        ]);
     }
 }

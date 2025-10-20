@@ -16,17 +16,24 @@ const newDescription = ref('');
 const notifications = ref([]);
 const openDeleteDialog = ref(false);
 const isDeleting = ref(false);
+const selectedTodoId = ref(null); 
 const auth=authStore();
-auth.loadUser();
-
+const token =ref()
 const tasks= taskStore();
 onMounted(()=>{
+  auth.loadUser();
+  token.value=auth.token
   fetchTask();
 });
 
 const fetchTask = async()=>{
+  console.log(token.value)
   try{
-    const response = await axios.get("http://127.0.0.1:8000/api/tasks");
+    const response = await axios.get("http://127.0.0.1:8000/api/tasks",{
+      headers:{
+        Authorization : `Bearer ${token.value}`
+      }
+    });
     todos.value = response.data;
     tasks.setter(todos.value)
   }catch(error){
@@ -50,8 +57,8 @@ const addTodo = async () => {
     completed: false,
   };
     try{
-      console.log(newTask)
-      await axios.post("http://127.0.0.1:8000/api/tasks/", newTask);
+      await axios.post("http://127.0.0.1:8000/api/tasks/",newTask,
+       {headers:{Authorization : `Bearer ${token.value}`}});
       todos.value.push(newTask)
       showNotification(`✨ Tâche "${newTask.title}" créée avec succès!`);
       newTodo.value = "";
@@ -62,7 +69,8 @@ const addTodo = async () => {
   };
 
   //ouvrir la boite de dialog delete
-const confirmDelete = () => {
+const confirmDelete = (id) => {
+    selectedTodoId.value = id;  
   openDeleteDialog.value=true;
   isDeleting.value = false;
 
@@ -73,10 +81,16 @@ const cancelDelete = () => {
   isDeleting.value = false;
 };
 // Supprimer une tâche
-const deleteTodo = async (id) => {
+const deleteTodo = async () => {
+    if (!selectedTodoId.value) return;  
+    const id = selectedTodoId.value;
   isDeleting.value = true;
   try{
-    const response = await axios.delete(`http://127.0.0.1:8000/api/tasks/:${id}`)
+    const response = await axios.delete(`http://127.0.0.1:8000/api/tasks/:${id}`,
+      {headers:{
+        Authorization : `Bearer ${token.value}`
+      }}
+    )
     todos.value = todos.value.filter((t) => t.id !== id);
     tasks.setter(todos.value)
     openDeleteDialog.value=false
@@ -97,7 +111,11 @@ const editTodo = (id) => {
 
 const updateTodoStatus=async (todo)=>{
     try {
-    const response = await axios.put(`http://127.0.0.1:8000/api/tasks/:${todo.id}`,todo)
+    const response = await axios.put(`http://127.0.0.1:8000/api/tasks/:${todo.id}`,todo,
+      {headers:{
+        Authorization : `Bearer ${token.value}`
+      }}
+    )
     }catch(error){
       console.log(error)
     }
@@ -208,14 +226,14 @@ const showNotification = (message) => {
               :open="openDeleteDialog"
               :is-deleting="isDeleting"
               v-on:cancel="cancelDelete"
-              v-on:confirm="deleteTodo(todo.id)"
+              v-on:confirm="deleteTodo()"
 
               />
               <!-- @click="deleteTodo(todo.id)"-->
               <Button
                 variant="ghost"
                 size="sm"
-               @click="confirmDelete"
+               @click="confirmDelete(todo.id)"
                 class="text-red-500 hover:bg-red-50 hover:text-red-700"
               >
                 <Trash2 class="w-4 h-4" />
