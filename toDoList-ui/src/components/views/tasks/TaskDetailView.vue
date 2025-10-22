@@ -4,9 +4,11 @@ import { useRoute, useRouter } from "vue-router";
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Save } from 'lucide-vue-next'
 import axios from "axios";
+import { authStore } from "@/stores/authStore";
 
 const route = useRoute();
 const router = useRouter();
+const auth = authStore();
 
 const form = ref({
   id:'',
@@ -18,6 +20,7 @@ const form = ref({
 const isLoading = ref(false);
 const errors = ref({});
 const notifications = ref([]);
+const token = ref();
 
 // TODO: Remplacer par un store/API pour récupérer les todos
 // Pour maintenant, utiliser les données du parent ou une store Pinia
@@ -25,6 +28,8 @@ const notifications = ref([]);
 const todosList = ref([]);
 */
 onMounted(() => {
+  auth.loadUser();
+  token.value = auth.token;
   const taskId = computed(() => route.params.id);
   loadTask(taskId);
 });
@@ -32,7 +37,11 @@ onMounted(() => {
 // Charger la tâche
 const loadTask = async (taskId) => {
   try{
-    const response = await axios.get(`http://127.0.0.1:8000/api/tasks/${taskId.value}`)
+    const response = await axios.get(`http://127.0.0.1:8000/api/tasks/${taskId.value}`,
+      {
+      headers: { Authorization: `Bearer ${token.value}` }
+    }
+    )
     if (response.data) {
       form.value = {
         id:response.data.id,
@@ -48,7 +57,6 @@ const loadTask = async (taskId) => {
     console.error(error)
   }
 };
-
 // Valider le formulaire
 const validate = () => {
   errors.value = {};

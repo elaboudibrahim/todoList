@@ -6,9 +6,7 @@ import {
   ListTodo, 
   User, 
   LogOut,
-  Settings,
-  Bell,
-  HelpCircle
+  Bell
 } from 'lucide-vue-next'
 import { authStore } from '@/stores/authStore'
 import { taskStore } from '@/stores/taskStore'
@@ -28,6 +26,11 @@ const navItems = computed(() => [
     path: '/tasks', 
     label: 'Tâches', 
     icon: ListTodo 
+  },
+  { 
+    path: '/notif', 
+    label: 'Notification', 
+    icon: Bell 
   },
   { 
     path: '/profile', 
@@ -71,8 +74,7 @@ const logout = () => {
           isActive(item.path)
             ? 'bg-green-100 text-green-700 font-medium shadow-sm'
             : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
-        ]"
-      >
+        ]">
         <component :is="item.icon" class="w-5 h-5 flex-shrink-0" />
         <span>{{ item.label }}</span>
       </router-link>
