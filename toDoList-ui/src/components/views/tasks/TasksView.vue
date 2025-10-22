@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted,onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { Button } from '@/components/ui/button'
 import { Plus, Trash2, Edit2 } from 'lucide-vue-next'
@@ -24,10 +24,38 @@ onMounted(()=>{
   auth.loadUser();
   token.value=auth.token
   fetchTask();
+   if (auth.token && auth.user?.id) {
+        window.Echo.channel(`tasks`)
+      .listen('.TaskCreated', (event) => {
+        todos.value.push(event.task);
+        tasks.setter(todos.value);
+        showNotification(`${event.user} a créé une nouvelle tache!`);
+      })
+      .listen('.TaskUpdated', (event) => {
+        const index = todos.value.findIndex(t => t.id === event.task.id);
+        if (index !== -1) {
+          todos.value[index] = event.task;
+          tasks.setter(todos.value);
+          showNotification(`${event.user} a modifie la tache ${event.taask.id} `);
+        }
+      }) 
+      .listen('TaskDeleted', (event) => {
+        console.log('WebSocket - Tâche supprimée:', event.taskId);
+        todos.value = todos.value.filter(t => t.id !== event.taskId);
+        tasks.setter(todos.value);
+        showNotification(`${event.task.id} a supprime la tache ${event.task.id}`); 
+      });
+    }
 });
 
+
+// onBeforeUnmount(() => {
+//   if (auth.user?.id) {
+//     window.Echo.leave(`tasks`);
+//   }
+// });
+
 const fetchTask = async()=>{
-  console.log(token.value)
   try{
     const response = await axios.get("http://127.0.0.1:8000/api/tasks",{
       headers:{
@@ -40,14 +68,9 @@ const fetchTask = async()=>{
     console.error("erreur api: ",error);
   }
 }
-
-
 // Computed - Compter les tâches restantes
 const remaining = computed(() => todos.value.filter(t => !t.completed).length);
 
-// Ajouter une tâche
-//TODO: ajouer larefresh du liste existant
-//TODO: modifie l id d user
 const addTodo = async () => {
   if (!newTodo.value.trim()) return; 
   const newTask = {
@@ -58,7 +81,8 @@ const addTodo = async () => {
   };
     try{
       await axios.post("http://127.0.0.1:8000/api/tasks/",newTask,
-       {headers:{Authorization : `Bearer ${token.value}`}});
+       {headers:
+        {Authorization : `Bearer ${token.value}`}});
       todos.value.push(newTask)
       showNotification(`✨ Tâche "${newTask.title}" créée avec succès!`);
       newTodo.value = "";
@@ -94,9 +118,8 @@ const deleteTodo = async () => {
     todos.value = todos.value.filter((t) => t.id !== id);
     tasks.setter(todos.value)
     openDeleteDialog.value=false
-    showNotification(`🗑️ "${response.data.message}"`);
   }catch(error){
-    showNotification('❌ Erreur lors de la suppression');
+    showNotification(' Erreur lors de la suppression');
     console.error("impossible de supprimer")
   } finally {
     isDeleting.value = false;
@@ -111,7 +134,7 @@ const editTodo = (id) => {
 
 const updateTodoStatus=async (todo)=>{
     try {
-    const response = await axios.put(`http://127.0.0.1:8000/api/tasks/:${todo.id}`,todo,
+    await axios.put(`http://127.0.0.1:8000/api/tasks/${todo.id}`,todo,
       {headers:{
         Authorization : `Bearer ${token.value}`
       }}
@@ -222,13 +245,7 @@ const showNotification = (message) => {
               >
                 <Edit2 class="w-4 h-4" />
               </Button>
-              <AlertDelet 
-              :open="openDeleteDialog"
-              :is-deleting="isDeleting"
-              v-on:cancel="cancelDelete"
-              v-on:confirm="deleteTodo()"
-
-              />
+             
               <!-- @click="deleteTodo(todo.id)"-->
               <Button
                 variant="ghost"
@@ -242,7 +259,13 @@ const showNotification = (message) => {
         </li>
       </ul>
       </div></div>
+      <AlertDelet 
+              :open="openDeleteDialog"
+              :is-deleting="isDeleting"
+              v-on:cancel="cancelDelete"
+              v-on:confirm="deleteTodo()"
 
+              />
       <transition-group name="notification" tag="div" class="fixed bottom-6 right-6 space-y-3 pointer-events-none">
       <div
         v-for="notif in notifications"
