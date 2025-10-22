@@ -11,10 +11,7 @@ use Illuminate\Support\Facades\Log;
 class TaskController extends Controller{
     
     public function index()
-    {    $user = Auth::user();
-        Log::info('Récupération des tâches', [
-            'user_id' =>  $user->full_name
-        ]);
+    {   
        $task=Task::where("user_id",Auth::id())->get();
         return response()->json($task);
         
@@ -48,8 +45,8 @@ class TaskController extends Controller{
     }
     public function show($id)
     {
-       $task=Task::where("user_id",Auth:id())->findOrFail($id);
-    return response()->json($task);
+       $task=Task::where("user_id",Auth::id())->findOrFail($id);
+         return response()->json($task);
     }
     public function update(Request $request, $id)
     {
@@ -71,7 +68,7 @@ class TaskController extends Controller{
     {
         $task = Task::where('user_id', Auth::id())->findOrFail($id);
         // broadcast(new TaskDeleted($taskId, $userId))->toOthers();
-         event(new TaskState($task));
+        //  event(new TaskState($task));
         $task->delete();
         return response()->json(['message' => 'Task deleted successfully']);
     }
