@@ -79,7 +79,10 @@ const saveTask = async () => {
 
   isLoading.value = true;
   try {
-    const response = await axios.put(`http://127.0.0.1:8000/api/tasks/:${form.value.id}`,form.value)
+    await axios.put(`http://127.0.0.1:8000/api/tasks/:${form.value.id}`,form.value,
+      {
+      headers: { Authorization: `Bearer ${token.value}` }
+    })
     showNotification('✅ Tâche mise à jour avec succès!');
     
     // Rediriger vers la liste après 1 seconde

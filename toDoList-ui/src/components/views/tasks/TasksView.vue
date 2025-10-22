@@ -134,7 +134,7 @@ const editTodo = (id) => {
 
 const updateTodoStatus=async (todo)=>{
     try {
-    await axios.put(`http://127.0.0.1:8000/api/tasks/${todo.id}`,todo,
+    await axios.put(`http://127.0.0.1:8000/api/tasks/:${todo.id}`,todo,
       {headers:{
         Authorization : `Bearer ${token.value}`
       }}
