@@ -18,16 +18,18 @@ const openDeleteDialog = ref(false);
 const isDeleting = ref(false);
 const selectedTodoId = ref(null); 
 const auth=authStore();
-const token =ref()
 const tasks= taskStore();
-onMounted(()=>{
+onMounted(async ()=>{
   auth.loadUser();
-  token.value=auth.token
-  fetchTask();
+
+  const response =await tasks.fetchTask(auth.token);
+  todos.value=response.data;
+
+
    if (auth.token && auth.user?.id) {
         window.Echo.channel(`tasks`)
       .listen('.TaskCreated', (event) => {
-        todos.value.push(event.task);
+      //  todos.value.push(event.task);
         tasks.setter(todos.value);
         showNotification(`${event.user} a créé une nouvelle tache!`);
       })
@@ -55,21 +57,9 @@ onMounted(()=>{
 //   }
 // });
 
-const fetchTask = async()=>{
-  try{
-    const response = await axios.get("http://127.0.0.1:8000/api/tasks",{
-      headers:{
-        Authorization : `Bearer ${token.value}`
-      }
-    });
-    todos.value = response.data;
-    tasks.setter(todos.value)
-  }catch(error){
-    console.error("erreur api: ",error);
-  }
-}
+
 // Computed - Compter les tâches restantes
-const remaining = computed(() => todos.value.filter(t => !t.completed).length);
+const remaining = computed(()=>tasks.countRemains)
 
 const addTodo = async () => {
   if (!newTodo.value.trim()) return; 
@@ -79,22 +69,15 @@ const addTodo = async () => {
     description:newDescription.value.trim(),
     completed: false,
   };
-    try{
-      await axios.post("http://127.0.0.1:8000/api/tasks/",newTask,
-       {headers:
-        {Authorization : `Bearer ${token.value}`}});
-      todos.value.push(newTask)
-      showNotification(`✨ Tâche "${newTask.title}" créée avec succès!`);
-      newTodo.value = "";
-      newDescription.value = "";
-    }catch(error){
-      console.error("Erreur lors de la création :", error);
-    }
+  const response = await tasks.addTodo(newTask, auth.token);
+  showNotification(`${response.message}`);
+  newTodo.value = "";
+  newDescription.value = "";
   };
 
-  //ouvrir la boite de dialog delete
+//ouvrir la boite de dialog delete
 const confirmDelete = (id) => {
-    selectedTodoId.value = id;  
+  selectedTodoId.value = id;  
   openDeleteDialog.value=true;
   isDeleting.value = false;
 
@@ -103,28 +86,22 @@ const confirmDelete = (id) => {
 const cancelDelete = () => {
   openDeleteDialog.value=false;
   isDeleting.value = false;
+
 };
-// Supprimer une tâche
+
 const deleteTodo = async () => {
     if (!selectedTodoId.value) return;  
     const id = selectedTodoId.value;
-  isDeleting.value = true;
-  try{
-    const response = await axios.delete(`http://127.0.0.1:8000/api/tasks/:${id}`,
-      {headers:{
-        Authorization : `Bearer ${token.value}`
-      }}
-    )
+    isDeleting.value = true;
+    const response = await tasks.deleteTask(id, auth.token);
+    showNotification(response.message)
+  
     todos.value = todos.value.filter((t) => t.id !== id);
-    tasks.setter(todos.value)
     openDeleteDialog.value=false
-  }catch(error){
-    showNotification(' Erreur lors de la suppression');
-    console.error("impossible de supprimer")
-  } finally {
+  
     isDeleting.value = false;
     openDeleteDialog.value = false;
-  }
+    selectedTodoId.value = null;
 };
 
 // Rediriger vers la page d'édition avec l'ID
@@ -133,15 +110,8 @@ const editTodo = (id) => {
 };
 
 const updateTodoStatus=async (todo)=>{
-    try {
-    await axios.put(`http://127.0.0.1:8000/api/tasks/:${todo.id}`,todo,
-      {headers:{
-        Authorization : `Bearer ${token.value}`
-      }}
-    )
-    }catch(error){
-      console.log(error)
-    }
+  const response = await tasks.updateTodo(todo.id, todo, auth.token);
+  showNotification(`${response.message}`);
 };
 
 // Afficher notification
