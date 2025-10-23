@@ -32,7 +32,7 @@ class UserController extends Controller
             'email' => $request->email,
             'phone_number' => $request->phone_number,
             'address' => $request->address,
-            'image' => $request->image,
+            'image' => $imagePath,
             'password' =>bcrypt($request->password),
 
         ]);
@@ -77,7 +77,11 @@ class UserController extends Controller
     if($request->has('address')) {
         $user->address = $request->address;
     }
-    
+    $imagePath = null;
+    if($request->hasFile('image')){
+        $imagePath = $request->file('image')->store('profile-images', 'public');
+        $user->image=$imagePath;
+    }
     $user->save();
     
     return response()->json([

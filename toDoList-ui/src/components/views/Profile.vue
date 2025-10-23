@@ -44,21 +44,16 @@ const loadUserData = () => {
       address: auth.user.address || '',
       image: auth.user.image || null,
     };
-    imagePreview.value = auth.user.image || null;
+    imagePreview.value = storedImageUrl.value || null;
   }
 };
 
 const handleImageUpload = (event) => {
   const file = event.target.files[0];
-  if (file) {
-   
-    if (file.size > 2 * 1024 * 1024) {
-      showNotification(' L\'image ne doit pas dépasser 2MB', 'error');
-      return;
-    }
-
-    form.value.image = file;
+  if (file) { 
+  form.value.image = file;
     
+  //Cree un aperçu local pour l'image uploadée
     const reader = new FileReader();
     reader.onload = (e) => {
       imagePreview.value = e.target.result;
@@ -66,7 +61,12 @@ const handleImageUpload = (event) => {
     reader.readAsDataURL(file);
   }
 };
-
+const storedImageUrl = computed(() => {
+  if (auth.user?.image) {
+    return `http://127.0.0.1:8000/storage/${auth.user.image}`;
+  }
+  return null;
+});
 const toggleEdit = () => {
   if (isEditing.value) {
     loadUserData();
@@ -81,9 +81,9 @@ const saveProfile = async () => {
     formData.append('phone_number', form.value.phone_number);
     formData.append('address', form.value.address);
     
-    // if (form.value.image instanceof File) {
-    //   formData.append('image', form.value.image);
-    // }
+    if (form.value.image instanceof File) {
+      formData.append('image', form.value.image);
+    }
     const result= await auth.updateProfile(formData,auth.token);
     if (result.success) {
     loadUserData();

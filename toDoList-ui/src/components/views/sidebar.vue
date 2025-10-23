@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed ,onMounted} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { 
   Home, 
@@ -45,6 +45,16 @@ const logout = () => {
   auth.logout();
   router.push('/login')
 }
+const profileImageUrl = computed(() => {
+  if (auth.user?.image) {
+    return `http://127.0.0.1:8000/storage/${auth.user.image}`;
+  }
+  return null;
+})
+onMounted(()=>{
+  auth.loadUser()
+  console.log(profileImageUrl.value);
+})
 </script>
 
 <template>
@@ -108,7 +118,13 @@ const logout = () => {
     <div class="p-4 border-t border-green-100 space-y-4 bg-gradient-to-t from-green-50 to-white">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-sm">
-          Pr
+          <img
+            v-if="profileImageUrl"
+            :src="profileImageUrl"
+            :alt="auth.user?.full_name"
+            class="w-full h-full object-cover"
+            @error="(e) => e.target.style.display = 'none'"
+          />
         </div>
         <div class="flex-1 min-w-0">
           <p class="text-sm font-medium text-gray-900 truncate">{{ auth.user.full_name }}</p>

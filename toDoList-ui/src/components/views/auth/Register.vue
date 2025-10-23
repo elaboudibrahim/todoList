@@ -32,6 +32,12 @@ const phone_number = ref('');
 const address = ref('');
 const image = ref(null);
 
+const handleImageUpload = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    image.value = file; 
+  }
+}
 const saveUser= async ()=>{
   try{
        const formData = new FormData();
@@ -40,11 +46,13 @@ const saveUser= async ()=>{
               formData.append('phone_number',phone_number.value);
               formData.append('address',address.value);
               formData.append('password',password.value);
-              formData.append('image',image);
+            //  formData.append('image',image);
+            if (image.value) {
+              formData.append('image', image.value);
+            }
         const response = await axios.post(`http://127.0.0.1:8000/api/auth/register`,formData,{
           headers: { 'Content-Type': 'multipart/form-data' },
         });
-         console.log(response);
          route.push("/login") 
   }catch(error){
     console.error(error);
@@ -94,7 +102,7 @@ const saveUser= async ()=>{
         <!-- Image Upload -->
             <div class="grid gap-2">
               <Label for="image">Profile Image</Label>
-              <Input id="image" type="file" accept="image/*" />
+              <Input id="image" type="file" accept="image/*"  @change="handleImageUpload"/>
             </div>
         <Button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white"
               @click="saveUser"> Create an account </Button>
