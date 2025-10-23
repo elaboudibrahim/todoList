@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted,onBeforeUnmount } from "vue";
+import { ref, computed, onMounted,onBeforeUnmount, watch } from "vue";
 import { useRouter } from "vue-router";
 import { Button } from '@/components/ui/button'
 import { Plus, Trash2, Edit2 } from 'lucide-vue-next'
@@ -8,7 +8,7 @@ import axios from "axios";
 import AlertDelet from "@/components/ui/alertDelet.vue";
 import { authStore } from "@/stores/authStore";
 import { taskStore } from "@/stores/taskStore";
-
+import LoadingDialog from "@/components/ui/LoadingDialog..vue";
 const router = useRouter();
 const todos = ref([]);
 const newTodo = ref('');
@@ -19,8 +19,22 @@ const isDeleting = ref(false);
 const selectedTodoId = ref(null); 
 const auth=authStore();
 const tasks= taskStore();
+const loadingMessages = [
+  "Chargement en cours...",
+  "Si tu te sens mal, moi aussi ",
+  "Patience, les données arrivent ",
+  "On prépare tout ça pour toi ",
+  "Presque fini… un peu de café ? "
+];
+const loadingMessage = ref("")
+function pickRandomMessage(){
+  const index = Math.floor(Math.random() * loadingMessages.length);
+  loadingMessage.value = loadingMessages[index]
+}
+
 onMounted(async ()=>{
   auth.loadUser();
+  pickRandomMessage();
 
   const response =await tasks.fetchTask(auth.token);
   todos.value=response.data;
@@ -60,6 +74,7 @@ onMounted(async ()=>{
 
 // Computed - Compter les tâches restantes
 const remaining = computed(()=>tasks.countRemains)
+const isLoading = computed(() => tasks.isLoading);
 
 const addTodo = async () => {
   if (!newTodo.value.trim()) return; 
@@ -127,7 +142,12 @@ const showNotification = (message) => {
 <template>
    
     <div class="container mx-auto py-8 text-center min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50">
-     <!-- la partie header de lapp-->
+    <LoadingDialog 
+      :is-open="isLoading"
+      :message="loadingMessage"
+      size="medium"
+    />
+      <!-- la partie header de lapp-->
       <div class="mb-8">
         <h1 class="text-4xl font-bold text-gray-900 mb-2">Ma To-Do List</h1>
         <p class="text-gray-600">Organisez vos tâches et restez productif</p>
