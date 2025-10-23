@@ -5,6 +5,9 @@ git clone https://github.com/elaboudibrahim/todoList.git
 cd  toDoList-core
 composer install
 
+# création du lien symbolique
+php artisan storage:link 
+
 ## Spec de la BDD
 dans le fcihier .env
 
