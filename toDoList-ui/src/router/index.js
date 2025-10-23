@@ -7,6 +7,7 @@ import Profile from '@/components/views/Profile.vue'
 import Register from '@/components/views/auth/Register.vue'
 import Login from '@/components/views/auth/Login.vue'
 import { authStore } from '@/stores/authStore'
+import NotificationPage from '@/components/views/notificationPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -20,8 +21,13 @@ const router = createRouter({
         {path: "/task/edit" , component: TaskDetailView},
         {path: "/task/edit/:id",  name: 'TaskEdit',  component: TaskDetailView},
         {path: "/tasks", name : "tasks", component: TasksList},
-        {path: "/profile", name: "profile", component: Profile}
+        {path: "/profile", name: "profile", component: Profile},
+        {path: "/notif", name: "notifacation", component: NotificationPage}
       ]
+    },
+     {
+      path: "/:pathMatch(.*)*",
+      redirect: "/login",
     },
 
   ],
