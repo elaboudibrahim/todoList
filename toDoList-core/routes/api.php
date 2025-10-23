@@ -17,6 +17,8 @@ use App\Http\Controllers\api\UserController;
 
 Route::middleware('auth:api')->group(function () {
     Route::get('/user', fn() => auth()->user());
+    Route::post('/user/update', [UserController::class, 'update']);
+    Route::post('/user/update-password',[UserController::class,'updatePassword']);
     Route::post('/auth/logout', [UserController::class, 'logout']);
     Route::post('/auth/refresh', [UserController::class, 'refresh']);
 

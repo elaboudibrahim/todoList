@@ -4,14 +4,13 @@ import { Button } from '@/components/ui/button';
 import { User, Mail, Phone, MapPin, Camera, Save, X, Edit2, Shield } from 'lucide-vue-next';
 import { authStore } from '@/stores/authStore';
 import axios from 'axios';
-
+import { computed } from 'vue';
 const auth = authStore();
 const isEditing = ref(false);
-const isSaving = ref(false);
 const notifications = ref([]);
 const imagePreview = ref(null);
 
-// Formulaire
+
 const form = ref({
   full_name: '',
   email: '',
@@ -20,7 +19,6 @@ const form = ref({
   image: null
 });
 
-// Mot de passe
 const passwordForm = ref({
   current_password: '',
   new_password: '',
@@ -30,9 +28,11 @@ const passwordForm = ref({
 const showPasswordSection = ref(false);
 const isUpdatingPassword = ref(false);
 
+const isSaving = computed(() => auth.isSaving);
 onMounted(() => {
   auth.loadUser();
   loadUserData();
+
 });
 
 const loadUserData = () => {
@@ -42,7 +42,7 @@ const loadUserData = () => {
       email: auth.user.email || '',
       phone_number: auth.user.phone_number || '',
       address: auth.user.address || '',
-      image: null
+      image: auth.user.image || null,
     };
     imagePreview.value = auth.user.image || null;
   }
@@ -51,15 +51,14 @@ const loadUserData = () => {
 const handleImageUpload = (event) => {
   const file = event.target.files[0];
   if (file) {
-    // Vérifier la taille (max 2MB)
+   
     if (file.size > 2 * 1024 * 1024) {
-      showNotification('❌ L\'image ne doit pas dépasser 2MB', 'error');
+      showNotification(' L\'image ne doit pas dépasser 2MB', 'error');
       return;
     }
 
     form.value.image = file;
     
-    // Prévisualisation
     const reader = new FileReader();
     reader.onload = (e) => {
       imagePreview.value = e.target.result;
@@ -70,93 +69,62 @@ const handleImageUpload = (event) => {
 
 const toggleEdit = () => {
   if (isEditing.value) {
-    // Annuler - recharger les données
     loadUserData();
   }
   isEditing.value = !isEditing.value;
 };
 
 const saveProfile = async () => {
-  isSaving.value = true;
-  
-  try {
     const formData = new FormData();
     formData.append('full_name', form.value.full_name);
     formData.append('email', form.value.email);
     formData.append('phone_number', form.value.phone_number);
     formData.append('address', form.value.address);
     
-    if (form.value.image) {
-      formData.append('image', form.value.image);
-    }
-
-    const response = await axios.post(
-      'http://127.0.0.1:8000/api/user/update',
-      formData,
-      {
-        headers: {
-          'Authorization': `Bearer ${auth.token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      }
-    );
-
-    // Mettre à jour les données locales
-    auth.updateUser(response.data.user);
+    // if (form.value.image instanceof File) {
+    //   formData.append('image', form.value.image);
+    // }
+    const result= await auth.updateProfile(formData,auth.token);
+    if (result.success) {
+    loadUserData();
     isEditing.value = false;
-    showNotification('✅ Profil mis à jour avec succès!', 'success');
-  } catch (error) {
-    console.error('Erreur mise à jour:', error);
-    showNotification('❌ Erreur lors de la mise à jour', 'error');
-  } finally {
-    isSaving.value = false;
+    showNotification(result.message, 'success');
+  } else {
+    showNotification(result.message, 'error');
   }
+    
 };
 
 const updatePassword = async () => {
-  // Validation
-  if (!passwordForm.value.current_password || !passwordForm.value.new_password) {
-    showNotification('❌ Veuillez remplir tous les champs', 'error');
+  if (!passwordForm.value.current_password || !passwordForm.value.new_password || !passwordForm.value.new_password_confirmation) {
+    showNotification(' Veuillez remplir tous les champs', 'error');
     return;
   }
 
   if (passwordForm.value.new_password !== passwordForm.value.new_password_confirmation) {
-    showNotification('❌ Les mots de passe ne correspondent pas', 'error');
+    showNotification(' Les mots de passe ne correspondent pas', 'error');
     return;
   }
 
   if (passwordForm.value.new_password.length < 8) {
-    showNotification('❌ Le mot de passe doit contenir au moins 8 caractères', 'error');
+    showNotification('Le mot de passe doit contenir au moins 8 caractères', 'error');
     return;
   }
 
   isUpdatingPassword.value = true;
-
-  try {
-    await axios.post(
-      'http://127.0.0.1:8000/api/user/update-password',
-      passwordForm.value,
-      {
-        headers: {
-          'Authorization': `Bearer ${auth.token}`
-        }
-      }
-    );
-
-    // Réinitialiser le formulaire
+  const response = await auth.updatePassword(passwordForm,auth.token);
+  if(response.success){
     passwordForm.value = {
       current_password: '',
       new_password: '',
       new_password_confirmation: ''
     };
     showPasswordSection.value = false;
-    showNotification('✅ Mot de passe modifié avec succès!', 'success');
-  } catch (error) {
-    console.error('Erreur mot de passe:', error);
-    showNotification('❌ Erreur lors de la modification du mot de passe', 'error');
-  } finally {
-    isUpdatingPassword.value = false;
+    showNotification(response.message, 'success');
+  }else {
+    showNotification(response.message, 'error');
   }
+  isUpdatingPassword.value = false;
 };
 
 const showNotification = (message, type = 'success') => {
